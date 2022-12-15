@@ -47,14 +47,14 @@ class Noise2CleanDenoiserModel(pl.LightningModule):
         return self._model(x)
 
 
-class Denoiser(pl.LightningModule):
-    def __init__(self, model_name):
-        super().__init__()
-
-        if model_name == "n2c":
-            pass
-        else:
-            raise NotImplementedError(model_name)
+class Noise2NoiseDenoiserModel(Noise2CleanDenoiserModel):
+    """
+    Denoiser trained in a supervised manner with two different noisy
+    realisation of the same scene, for example two microscope images of the
+    same tissue sample. Apart from the data used the model is exactly same as
+    for Noise2Clean and is trained in the same way using mean-squared error as
+    the loss.
+    """
 
 
 class BenchmarkingDataModule(pl.LightningDataModule):
@@ -112,9 +112,26 @@ class BenchmarkingDataModule(pl.LightningDataModule):
         )
 
 
+def _create_benchmark_model_and_datamodule(model_name):
+    dm = BenchmarkingDataModule(model_name=model_name, n_dataloader_workers=6)
+    if model_name == "n2c":
+        model = Noise2NoiseDenoiserModel(n_channels=dm.n_channels)
+    elif model_name == "n2n":
+        model = Noise2NoiseDenoiserModel(n_channels=dm.n_channels)
+    else:
+        raise NotImplementedError(model_name)
+
+    return model, dm
+
+
 if __name__ == "__main__":
-    dm = BenchmarkingDataModule(model_name="n2c", n_dataloader_workers=6)
-    model = Noise2CleanDenoiserModel(n_channels=dm.n_channels)
+    import argparse
+
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument("model_name")
+    args = argparser.parse_args()
+
+    model, dm = _create_benchmark_model_and_datamodule(model_name=args.model_name)
 
     assert torch.cuda.is_available()
 
