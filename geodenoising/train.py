@@ -124,8 +124,8 @@ def _create_benchmark_model_and_datamodule(model_name):
     return model, dm
 
 
-if __name__ == "__main__":
-    import argparse
+def main():
+    import argparse  # noqa
 
     argparser = argparse.ArgumentParser()
     argparser.add_argument("model_name")
@@ -143,3 +143,7 @@ if __name__ == "__main__":
     )
 
     trainer.fit(model=model, train_dataloaders=dm)
+
+
+if __name__ == "__main__":
+    main()
