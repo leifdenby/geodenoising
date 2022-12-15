@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import xarray as xr
 from torchdata.datapipes.iter import IterableWrapper
@@ -10,10 +11,16 @@ def xr_collate_fn(samples) -> torch.Tensor:
     Converts individual xarray.DataArray objects to a torch.Tensor (float32
     dtype), and stacks them all into a single torch.Tensor.
     """
-    tensors = [
-        torch.as_tensor(data=sample.squeeze().data.astype(dtype="float32"))
-        for sample in samples
-    ]
+    tensors = []
+
+    for sample in samples:
+        data = sample.squeeze().data.astype(dtype="float32")
+        if len(data.shape) == 2:
+            # add channel axis if we've only got one channel
+            data = data[np.newaxis, ...]
+        tensor = torch.as_tensor(data=data)
+        tensors.append(tensor)
+
     return torch.stack(tensors=tensors)
 
 
@@ -73,3 +80,28 @@ def create_benchmarking_pipeline(
         dp = dps[0]
 
     return dp.header(n_samples)
+
+
+def create_training_benchmark_pipeline(
+    filepaths,
+    model_name,
+    n_samples=100,
+    train_val_split=0.9,
+    tile_size=128,
+    batch_size=16,
+    seed=42,
+    noise_sigma=0.2,
+):
+    dp = create_benchmarking_pipeline(
+        filepaths=filepaths,
+        model_name=model_name,
+        tile_size=tile_size,
+        batch_size=batch_size,
+        n_samples=n_samples,
+        noise_sigma=noise_sigma,
+    )
+    return dp.random_split(
+        weights=dict(train=train_val_split, val=1.0 - train_val_split),
+        seed=seed,
+        total_length=n_samples,
+    )

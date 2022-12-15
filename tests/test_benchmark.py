@@ -5,10 +5,12 @@ import tempfile
 
 import numpy as np
 import pytest
+import pytorch_lightning as pl
 import torch
 import xarray as xr
 
 from geodenoising.data.les_benchmark import create_benchmarking_pipeline
+from geodenoising.train import BenchmarkingDataModule, Noise2CleanDenoiserModel
 
 MODELS = "n2c n2n ssdn".split()
 
@@ -35,10 +37,10 @@ def _create_random_test_data(dx, lx, ly, lz):
 def test_benchmark(model_name):
     with tempfile.NamedTemporaryFile(suffix=".nc") as tfile:
         fp = tfile.name
-        da = _create_random_test_data(dx=25, lx=1000, ly=1000, lz=600)
+        da = _create_random_test_data(dx=10, lx=1000, ly=1000, lz=600)
         da.to_netcdf(fp)
         da.close()
-        tile_size = 24
+        tile_size = 32
         batch_size = 2
         dp = create_benchmarking_pipeline(
             [fp], model_name=model_name, batch_size=batch_size, tile_size=tile_size
@@ -54,3 +56,17 @@ def test_benchmark(model_name):
             assert all(torch.is_tensor(v) for v in item)
         else:
             raise NotImplementedError(model_name)
+
+
+def test_train():
+    model_name = "n2c"
+    dm = BenchmarkingDataModule(model_name=model_name, n_samples=5)
+    model = Noise2CleanDenoiserModel(n_channels=dm.n_channels)
+
+    trainer = pl.Trainer(
+        max_epochs=3,
+        accelerator="auto",
+        devices=1 if torch.cuda.is_available() else None,
+    )
+
+    trainer.fit(model=model, train_dataloaders=dm)
