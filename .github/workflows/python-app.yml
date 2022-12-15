@@ -33,9 +33,17 @@ jobs:
 
     - name: Install dependencies
       run: |
-        # mamba install xesmf cartopy -c conda-forge -y
+        #mamba install torchdata pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch-nightly -c nvidia -y
         python -m pip install --upgrade pip
         python -m pip install .[test]
+
+    - uses: actions/cache@v3
+      with:
+      path: ~/.cache/pip
+      key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.cfg') }}
+      restore-keys: |
+        ${{ runner.os }}-pip-
+
     - name: Test package with pytest (including notebooks)
       run: |
         python -m pytest --nbval-lax --current-env
