@@ -39,10 +39,10 @@ jobs:
 
     - uses: actions/cache@v3
       with:
-      path: ~/.cache/pip
-      key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.cfg') }}
-      restore-keys: |
-        ${{ runner.os }}-pip-
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.cfg') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
     - name: Test package with pytest (including notebooks)
       run: |
