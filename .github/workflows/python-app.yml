@@ -1,0 +1,41 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: geodenoising
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        channels: conda-forge
+        channel-priority: strict
+        mamba-version: "*"
+        auto-update-conda: false
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        # mamba install xesmf cartopy -c conda-forge -y
+        python -m pip install --upgrade pip
+        python -m pip install .[test]
+    - name: Test package with pytest (including notebooks)
+      run: |
+        python -m pytest --nbval-lax --current-env
