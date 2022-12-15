@@ -9,8 +9,8 @@ import pytorch_lightning as pl
 import torch
 import xarray as xr
 
+from geodenoising.benchmark import BenchmarkingDataModule, Noise2CleanDenoiserModel
 from geodenoising.data.les_benchmark import create_benchmarking_pipeline
-from geodenoising.train import BenchmarkingDataModule, Noise2CleanDenoiserModel
 
 MODELS = "n2c n2n ssdn".split()
 
