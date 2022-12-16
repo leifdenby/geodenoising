@@ -33,8 +33,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        #mamba install torchdata pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch-nightly -c nvidia -y
         python -m pip install --upgrade pip
+        # this needs putting into setup.cfg eventually...
+        python -m pip install --pre torchdata --extra-index-url https://download.pytorch.org/whl/nightly/cpu
         python -m pip install .[test]
 
     - uses: actions/cache@v3
@@ -44,6 +45,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    - name: Test package with pytest (including notebooks)
+    - name: Test package with pytest
       run: |
-        python -m pytest --nbval-lax --current-env
+        python -m pytest
+        # python -m pytest --nbval-lax --current-env
