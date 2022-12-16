@@ -17,7 +17,9 @@ from .models import Noise2CleanDenoiserModel, Noise2NoiseDenoiserModel
 
 
 class BenchmarkingDataModule(pl.LightningDataModule):
-    def __init__(self, model_name, n_samples=100, n_dataloader_workers=6):
+    def __init__(
+        self, model_name, fps_train, fps_test, n_samples=100, n_dataloader_workers=6
+    ):
         super().__init__()
         self.model_name = model_name
         self.n_samples = n_samples
@@ -33,6 +35,8 @@ class BenchmarkingDataModule(pl.LightningDataModule):
         self.dp_test = None
 
         self.n_dataloader_workers = n_dataloader_workers
+        self.fps_train = fps_train
+        self.fps_test = fps_test
 
     def setup(self, stage):
         kwargs = dict(
@@ -42,15 +46,12 @@ class BenchmarkingDataModule(pl.LightningDataModule):
             tile_size=self.tile_size,
             batch_size=self.batch_size,
         )
-        fp_root = Path(__file__).parent.parent / "datasets_prep"
         if stage == "fit" or stage is None:
-            filepaths = [fp_root / "rico.no_shear_br0.05.qv.tn6.nc"]
             self.dp_train, self.dp_val = create_training_benchmark_pipeline(
-                filepaths, train_val_split=self.train_val_split, **kwargs
+                self.fps_train, train_val_split=self.train_val_split, **kwargs
             )
         if stage == "test" or stage is None:
-            filepaths = [fp_root / "rico.no_shear_br0.05.qv.tn7.nc"]
-            self.dp_test = create_benchmarking_pipeline(filepaths, **kwargs)
+            self.dp_test = create_benchmarking_pipeline(self.fps_test, **kwargs)
 
     def train_dataloader(self):
         # batching already done in datapipe
@@ -72,7 +73,16 @@ class BenchmarkingDataModule(pl.LightningDataModule):
 
 
 def _create_benchmark_model_and_datamodule(model_name):
-    dm = BenchmarkingDataModule(model_name=model_name, n_dataloader_workers=6)
+    fp_root = Path(__file__).parent.parent / "datasets_prep"
+    fps_train = [fp_root / "rico.no_shear_br0.05.qv.tn6.nc"]
+    fps_test = [fp_root / "rico.no_shear_br0.05.qv.tn7.nc"]
+
+    dm = BenchmarkingDataModule(
+        model_name=model_name,
+        fps_train=fps_train,
+        fps_test=fps_test,
+        n_dataloader_workers=6,
+    )
     if model_name == "n2c":
         model = Noise2CleanDenoiserModel(n_channels=dm.n_channels)
     elif model_name == "n2n":

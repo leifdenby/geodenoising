@@ -45,6 +45,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    - name: Test package with pytest (including notebooks)
+    - name: Test package with pytest
       run: |
-        python -m pytest --nbval-lax --current-env
+        python -m pytest
+        # python -m pytest --nbval-lax --current-env
