@@ -129,15 +129,25 @@ def _create_n2v_benchmarking_pipeline(
         .map(xr_to_tensor)
     )
 
+    dp_manipulated, dp_manipulated_coords = (
+    dp_chips.map(xr_to_tensor).map(manipulate).unzip(sequence_length=2)
+)
+
     dp_noisy, dp_noisy_manipulated = dp_noisy.fork(num_instances=2)
 
     dp_noisy_manipulated = dp_noisy_manipulated.map(manipulate_input)
-    dp_noisy_manipulated, dp_manipulated_coords = dp_noisy_manipulated.unzip(2)
+    dp_noisy_manipulated, dp_noisy_manipulated_coords = dp_noisy_manipulated.unzip(
+        sequence_length=2
+    )
 
-    # dp_manipulated_chips
-    # .batch(batch_size=batch_size)
-    # .map(torch.stack)
-    # .map(add_channel_dim)
+    batch_and_stack = lambda dp: dp.batch(batch_size=batch_size).map(torch.stack)
+
+    dp = (
+        batch_and_stack(dp_noisy_manipulated)
+        .zip(batch_and_stack(dp_noisy), batch_and_stack(dp_noisy_manipulated_coords))
+        .map(add_channel_dim)
+    )
+    return dp
 
 
 def create_benchmarking_pipeline(
@@ -172,7 +182,13 @@ def create_benchmarking_pipeline(
             std_global=std_global,
         )
     elif model_name == "n2v":
-        pass
+        dp = _create_n2v_benchmarking_pipeline(
+            dp_clean_chips=dp_chipped_input,
+            noise_sigma=noise_sigma,
+            batch_size=batch_size,
+            mean_global=mean_global,
+            std_global=std_global,
+        )
     else:
         raise NotImplementedError(model_name)
 
