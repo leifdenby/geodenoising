@@ -130,8 +130,8 @@ def _create_n2v_benchmarking_pipeline(
     )
 
     dp_manipulated, dp_manipulated_coords = (
-    dp_chips.map(xr_to_tensor).map(manipulate).unzip(sequence_length=2)
-)
+        dp_chips.map(xr_to_tensor).map(manipulate).unzip(sequence_length=2)
+    )
 
     dp_noisy, dp_noisy_manipulated = dp_noisy.fork(num_instances=2)
 
