@@ -12,7 +12,7 @@ import xarray as xr
 from geodenoising.benchmark import BenchmarkingDataModule, Noise2CleanDenoiserModel
 from geodenoising.data.les_benchmark import create_benchmarking_pipeline
 
-MODELS = "n2c n2n ssdn".split()
+MODELS = "n2c n2n ssdn n2v".split()
 
 
 def _create_stripy_test_data(dx, lx, ly, lz):
@@ -45,18 +45,24 @@ def test_benchmark_pipeline(model_name):
     with FakeCleanData() as fp:
         tile_size = 32
         batch_size = 2
+        n_channels = 1
         dp = create_benchmarking_pipeline(
             [fp], model_name=model_name, batch_size=batch_size, tile_size=tile_size
         )
         batch = next(iter(dp))
-        assert len(batch) == batch_size
 
-        item = batch[0]
+        expected_shape = torch.Size([batch_size, n_channels, tile_size, tile_size])
         if model_name == "ssdn":
+            # training examples only consist of a single item, the noisy data sample
+            item = batch
             assert torch.is_tensor(item)
+            assert item.size() == expected_shape
         elif model_name in ["n2n", "n2c"]:
-            assert len(item)
-            assert all(torch.is_tensor(v) for v in item)
+            # training examples consist of two tensors; (noisy, clean) for n2c
+            # and (noisy, noisy) for n2n
+            assert len(batch) == 2
+            assert all(torch.is_tensor(tensor) for tensor in batch)
+            assert all(tensor.size() == expected_shape for tensor in batch)
         else:
             raise NotImplementedError(model_name)
 
