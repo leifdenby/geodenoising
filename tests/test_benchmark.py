@@ -51,10 +51,6 @@ def test_benchmark_pipeline(model_name):
         )
         batch = next(iter(dp))
 
-        import ipdb
-
-        ipdb.set_trace()
-
         expected_shape = torch.Size([batch_size, n_channels, tile_size, tile_size])
         if model_name == "ssdn":
             # training examples only consist of a single item, the noisy data sample

@@ -48,4 +48,4 @@ jobs:
     - name: Test package with pytest
       run: |
         python -m pytest
-        # python -m pytest --nbval-lax --current-env
+        # python -m pytest --current-env
