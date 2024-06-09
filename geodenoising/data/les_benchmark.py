@@ -3,7 +3,7 @@ import torch
 import xarray as xr
 from torchdata.datapipes.iter import IterableWrapper
 
-from ..models.n2v.input import manipulate as manipulate_input
+# from ..models.n2v.input import manipulate as manipulate_input
 from . import datapipes  # noqa, provide functional datapipe operations
 
 
@@ -129,25 +129,33 @@ def _create_ssdn_benchmarking_pipeline(
 def _create_n2v_benchmarking_pipeline(
     dp_clean_chips, noise_sigma, batch_size, mean_global, std_global
 ):
-    dp_noisy = (
+    _ = (
         dp_clean_chips.xr_add_noise(sigma=noise_sigma)
         .normalize_xr(std=std_global, mean=mean_global)
         .map(xr_to_tensor)
         .map(add_channel_dim_to_image)
     )
 
-    dp_noisy, dp_noisy_manipulated = dp_noisy.fork(num_instances=2)
+    raise NotImplementedError
 
-    dp_noisy_manipulated = dp_noisy_manipulated.map(manipulate_input)
-    dp_noisy_manipulated, dp_manipulated_coords = dp_noisy_manipulated.unzip(2)
+    # dp_manipulated, dp_manipulated_coords = (
+    #     dp_chips.map(xr_to_tensor).map(manipulate).unzip(sequence_length=2)
+    # )
 
-    dp = (
-        dp_noisy_manipulated.zip(dp_noisy, dp_manipulated_coords).batch(
-            batch_size=batch_size
-        )
-        # .map(torch.stack)
-    )
-    return dp
+    # dp_noisy, dp_noisy_manipulated = dp_noisy.fork(num_instances=2)
+
+    # dp_noisy_manipulated = dp_noisy_manipulated.map(manipulate_input)
+    # dp_noisy_manipulated, dp_noisy_manipulated_coords = dp_noisy_manipulated.unzip(
+    #     sequence_length=2
+    # )
+
+    # dp = (
+    #     dp_noisy_manipulated.zip(dp_noisy, dp_manipulated_coords).batch(
+    #         batch_size=batch_size
+    #     )
+    #     # .map(torch.stack)
+    # )
+    # return dp
 
 
 def create_benchmarking_pipeline(
