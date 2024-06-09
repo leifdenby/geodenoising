@@ -31,7 +31,13 @@ def xr_collate_fn(samples) -> torch.Tensor:
     return torch.stack(tensors=tensors)
 
 
-def add_channel_dim(tensor):
+def add_channel_dim_to_image(tensor):
+    if len(tensor.size()) == 2:
+        tensor = tensor[None, :, :]
+    return tensor
+
+
+def add_channel_dim_to_batch(tensor):
     if len(tensor.size()) == 3:
         tensor = tensor[:, None, :, :]
     return tensor
@@ -77,7 +83,7 @@ def _create_n2c_benchmarking_pipeline(
             .map(xr_to_tensor)
             .batch(batch_size=batch_size)
             .map(torch.stack)
-            .map(add_channel_dim)
+            .map(add_channel_dim_to_batch)
         )
 
     dp_clean = chips_to_batch_tensor(dp_clean)
@@ -98,7 +104,7 @@ def _create_n2n_benchmarking_pipeline(
             .map(xr_to_tensor)
             .batch(batch_size=batch_size)
             .map(torch.stack)
-            .map(add_channel_dim)
+            .map(add_channel_dim_to_batch)
         )
 
     dp_noisy1 = clean_chips_to_noisy_batch_tensor(dp_noisy1)
@@ -116,7 +122,7 @@ def _create_ssdn_benchmarking_pipeline(
         .map(xr_to_tensor)
         .batch(batch_size=batch_size)
         .map(torch.stack)
-        .map(add_channel_dim)
+        .map(add_channel_dim_to_batch)
     )
 
 
@@ -127,6 +133,7 @@ def _create_n2v_benchmarking_pipeline(
         dp_clean_chips.xr_add_noise(sigma=noise_sigma)
         .normalize_xr(std=std_global, mean=mean_global)
         .map(xr_to_tensor)
+        .map(add_channel_dim_to_image)
     )
 
     dp_noisy, dp_noisy_manipulated = dp_noisy.fork(num_instances=2)
@@ -134,10 +141,13 @@ def _create_n2v_benchmarking_pipeline(
     dp_noisy_manipulated = dp_noisy_manipulated.map(manipulate_input)
     dp_noisy_manipulated, dp_manipulated_coords = dp_noisy_manipulated.unzip(2)
 
-    # dp_manipulated_chips
-    # .batch(batch_size=batch_size)
-    # .map(torch.stack)
-    # .map(add_channel_dim)
+    dp = (
+        dp_noisy_manipulated.zip(dp_noisy, dp_manipulated_coords).batch(
+            batch_size=batch_size
+        )
+        # .map(torch.stack)
+    )
+    return dp
 
 
 def create_benchmarking_pipeline(
@@ -172,7 +182,13 @@ def create_benchmarking_pipeline(
             std_global=std_global,
         )
     elif model_name == "n2v":
-        pass
+        dp = _create_n2v_benchmarking_pipeline(
+            dp_clean_chips=dp_chipped_input,
+            noise_sigma=noise_sigma,
+            batch_size=batch_size,
+            mean_global=mean_global,
+            std_global=std_global,
+        )
     else:
         raise NotImplementedError(model_name)
 

@@ -51,6 +51,10 @@ def test_benchmark_pipeline(model_name):
         )
         batch = next(iter(dp))
 
+        import ipdb
+
+        ipdb.set_trace()
+
         expected_shape = torch.Size([batch_size, n_channels, tile_size, tile_size])
         if model_name == "ssdn":
             # training examples only consist of a single item, the noisy data sample
@@ -63,6 +67,11 @@ def test_benchmark_pipeline(model_name):
             assert len(batch) == 2
             assert all(torch.is_tensor(tensor) for tensor in batch)
             assert all(tensor.size() == expected_shape for tensor in batch)
+        elif model_name == "n2v":
+            assert len(batch) == 3
+            y_noisy_manipulated, manipulated_coords, y_noisy = batch
+            assert torch.is_tensor(y_noisy_manipulated)
+            assert torch.is_tensor(y_noisy)
         else:
             raise NotImplementedError(model_name)
 
