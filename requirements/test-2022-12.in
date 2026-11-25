@@ -1,0 +1,5 @@
+# Extra inputs for requirements/test-2022-12.txt, compiled together with
+# setup.cfg (see that file's header for the command).
+pytest
+# pytorch-lightning 1.8 imports pkg_resources at import time
+setuptools
