@@ -2,3 +2,6 @@
 .eggs/
 *.pyc
 lightning_logs/
+.venv/
+build/
+dist/

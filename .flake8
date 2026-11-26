@@ -1,0 +1,26 @@
+[flake8]
+# flake8 doesn't read pyproject.toml, so its settings live here (moved from
+# setup.cfg). Newer flake8 rejects inline comments in option values:
+#   E203 whitespace before ':' - doesn't work well with black
+#   E402 module level import not at top of file
+#   E501 line too long - let black worry about that
+#   E731 do not assign a lambda expression, use a def
+#   W503 line break before binary operator
+#   E741 ambigious name
+#   C901 function is too complex
+ignore =
+    E203,
+    E402,
+    E501,
+    E731,
+    W503,
+    E741,
+    C901
+exclude =
+    .eggs,
+    .venv,
+    doc
+per-file-ignores = __init__.py:F401
+# settings for using flake8 with black:
+max-line-length = 88
+extend-ignore = E203

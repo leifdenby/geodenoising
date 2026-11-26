@@ -1,0 +1,124 @@
+[build-system]
+requires = ["setuptools>=61", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geodenoising"
+dynamic = ["version"]
+description = "Denoising for geophysical applications"
+readme = "README.md"
+authors = [{ name = "Leif Denby", email = "leif@denby.eu" }]
+# The 2022 stack (torch 1.13, torchdata 0.5) was tested on Python 3.10 only
+requires-python = "==3.10.*"
+# Direct dependencies pinned to the versions in requirements/test-2022-12.txt
+# (newest releases on 2022-12-17). Current torchdata (>= 0.10) no longer has
+# `torchdata.datapipes`, so these must not float.
+dependencies = [
+    "netcdf4==1.6.2",
+    "numpy==1.23.5",
+    "pytorch-lightning==1.8.5.post0",
+    # pytorch-lightning 1.8 imports pkg_resources at import time
+    "setuptools==65.6.3",
+    "torch==1.13.1",
+    "torchdata==0.5.1",
+    "xarray==2022.12.0",
+    "xbatcher==0.2.0",
+    "zen3geo==0.5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/leifdenby/geodenoising"
+
+[dependency-groups]
+test = ["pytest==7.2.0"]
+dev = [
+    { include-group = "test" },
+    "pre-commit",
+    "ipython",
+    "jupyterlab",
+    # for notebook tests (`pytest --nbval-lax`), not run in CI
+    "nbval",
+]
+
+[tool.uv]
+default-groups = ["test", "dev"]
+# Pin the transitive runtime dependencies to requirements/test-2022-12.txt too,
+# so that uv.lock reproduces that environment. (`exclude-newer` can't be used
+# for this: it also drops every torch wheel on the PyTorch index, which
+# publishes no upload dates.) The nvidia-*-cu11 pins are left out because the
+# CPU torch build doesn't need them.
+constraint-dependencies = [
+    "affine==2.3.1",
+    "aiohttp==3.8.3",
+    "aiosignal==1.3.1",
+    "async-timeout==4.0.2",
+    "attrs==22.1.0",
+    "certifi==2022.12.7",
+    "cftime==1.6.2",
+    "charset-normalizer==2.1.1",
+    "click==8.1.3",
+    "click-plugins==1.1.1",
+    "cligj==0.7.2",
+    "cloudpickle==2.2.0",
+    "dask==2022.12.1",
+    "exceptiongroup==1.0.4",
+    "frozenlist==1.3.3",
+    "fsspec==2022.11.0",
+    "idna==3.4",
+    "iniconfig==1.1.1",
+    "lightning-utilities==0.4.2",
+    "locket==1.0.0",
+    "multidict==6.0.3",
+    "packaging==22.0",
+    "pandas==1.5.2",
+    "partd==1.3.0",
+    "pluggy==1.0.0",
+    "portalocker==2.6.0",
+    "protobuf==3.20.1",
+    "pyparsing==3.0.9",
+    "pyproj==3.4.1",
+    "python-dateutil==2.8.2",
+    "pytz==2022.6",
+    "pyyaml==6.0",
+    "rasterio==1.3.4",
+    "requests==2.28.1",
+    "rioxarray==0.13.2",
+    "six==1.16.0",
+    "snuggs==1.4.7",
+    "tensorboardx==2.5.1",
+    "tomli==2.0.1",
+    "toolz==0.12.0",
+    "torchmetrics==0.11.0",
+    "tqdm==4.64.1",
+    "typing-extensions==4.4.0",
+    "urllib3==1.26.13",
+    "wheel==0.38.4",
+    "yarl==1.8.2",
+]
+
+# CPU-only torch wheels, for CI on GitHub's runners and for denby.eu
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["geodenoising*"]
+
+[tool.setuptools_scm]
+
+[tool.pylint.typecheck]
+# List of members which are set dynamically and missed by Pylint inference
+# system, and so shouldn't trigger E1101 when accessed.
+generated-members = "numpy.*,torch.*"
+
+[tool.pylint.basic]
+# allow 1 or 2 length variable names, https://stackoverflow.com/a/69048835/271776
+good-names-rgxs = "^[_a-z][_a-z0-9]?$"
+
+[tool.pylint."messages control"]
+disable = "missing-docstring,empty-docstring,too-many-locals,too-many-arguments,abstract-method,unused-import,arguments-differ,too-many-ancestors,too-many-instance-attributes,import-outside-toplevel"
