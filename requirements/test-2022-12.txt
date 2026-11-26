@@ -3,17 +3,23 @@
 # `main`). The unpinned install in setup.cfg no longer works: torchdata>=0.10
 # removed `torchdata.datapipes`, which geodenoising and zen3geo rely on.
 #
+# The project is now managed with uv (pyproject.toml + uv.lock, see README),
+# and pyproject.toml pins the same versions. This file is kept as a record of
+# the 2022-12 environment. It differs from uv.lock only in using the PyPI
+# torch wheel, with its CUDA runtime, where uv.lock uses the CPU build.
+#
 # Tested on Linux x86_64 with Python 3.10 (2026-11-25). The nvidia-*-cu11 pins
 # are the CUDA 11.7 runtime that the PyPI torch 1.13.1 wheel pulls in on
 # Linux x86_64.
 #
-# Install:
+# Install without uv sync:
 #   uv venv --python 3.10 .venv
 #   uv pip install --python .venv/bin/python -r requirements/test-2022-12.txt
 #   uv pip install --python .venv/bin/python --no-deps -e .
 #   .venv/bin/python -m pytest
 #
-# Regenerate with:
+# Generated with (setup.cfg as of commit a6c6747, since replaced by
+# pyproject.toml):
 #   uv pip compile --python-version 3.10 --exclude-newer 2022-12-17 \
 #     --no-header --no-annotate setup.cfg requirements/test-2022-12.in \
 #     -o requirements/test-2022-12.txt
