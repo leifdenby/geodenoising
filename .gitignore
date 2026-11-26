@@ -3,3 +3,5 @@
 *.pyc
 lightning_logs/
 .venv/
+build/
+dist/
