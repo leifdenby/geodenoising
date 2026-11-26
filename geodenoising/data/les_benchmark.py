@@ -51,10 +51,12 @@ def create_benchmarking_pipeline(
     )
     dp_chipped_input = dp_chipped_input_x.mux(dp_chipped_input_y).shuffle()
 
+    # for models trained on pairs the streams are ordered (input, target),
+    # matching `x, y = batch` in the models' training step
     if model_name == "n2c":
         dp_clean, dp_noisy = dp_chipped_input.fork(num_instances=2)
         dp_noisy = dp_noisy.xr_add_noise(sigma=noise_sigma)
-        dps = [dp_clean, dp_noisy]
+        dps = [dp_noisy, dp_clean]
     elif model_name == "n2n":
         dp_noisy1, dp_noisy2 = dp_chipped_input.fork(num_instances=2)
         dp_noisy1 = dp_noisy1.xr_add_noise(sigma=noise_sigma)
